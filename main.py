@@ -56,8 +56,7 @@ async def get_labels_from_url(request):
         src = request.args['path'][0]
         out = app_model.get_pred(src, model, 'path')
     else:
-         return text('No url parameter.')
-
+         return text('No url or path parameter.')
 
     return json(out)
 
@@ -69,7 +68,6 @@ async def get_labels_from_file(request):
         return text('No image file found.')
 
     out = app_model.get_pred(img_file.body, model, 'file')
-
     return json(out)
 
 @app.exception(NotFound)
