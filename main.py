@@ -49,11 +49,15 @@ async def i_am_ready_to_die(request):
 @app.route('/get-label')
 async def get_labels_from_url(request):
     global model
-    if 'url' not in request.args.keys():
-        return json('No url parameter.')
+    if 'url' in request.args.keys():
+        src = request.args['url'][0]
+        out = app_model.get_pred(src, model, 'url')
+    elif 'path' in request.args.keys():
+        src = request.args['path'][0]
+        out = app_model.get_pred(src, model, 'path')
+    else:
+         return text('No url parameter.')
 
-    src = request.args['url'][0]
-    out = app_model.get_pred(src, model, 'url')
 
     return json(out)
 
@@ -62,7 +66,7 @@ async def get_labels_from_file(request):
     global model
     img_file = request.files.get('image')
     if img_file is None:
-        return json('No image file found.')
+        return text('No image file found.')
 
     out = app_model.get_pred(img_file.body, model, 'file')
 
