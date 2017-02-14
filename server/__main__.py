@@ -1,4 +1,4 @@
-import app_model
+from . import app_model
 from sanic import Sanic
 from sanic.response import text, json
 from sanic.exceptions import NotFound, ServerError
