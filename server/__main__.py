@@ -4,20 +4,11 @@ from sanic import Sanic
 from sanic.response import text, json
 from sanic.exceptions import NotFound, ServerError
 
-import asyncio
-import uvloop
-# from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-
-asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-loop = asyncio.get_event_loop()
-# pool = ProcessPoolExecutor()
-# pool = ThreadPoolExecutor()
-
 model = None
 app = Sanic(__name__)
 i = 0
 
-def load_model():
+def load_model(sanic, loop):
     global model
     model = app_model.load_model()
 
@@ -59,8 +50,6 @@ async def i_am_ready_to_die(request):
 @app.route('/get-label')
 async def get_labels_from_url(request):
     global i
-    # global pool
-    global loop
     global model
     
     i += 1
@@ -77,14 +66,11 @@ async def get_labels_from_url(request):
     else:
          return text('No url or path parameter.')
 
-    # out = await loop.run_in_executor(None, app_model.get_pred, src, model, opt, idx)
-    out = loop.run_in_executor(None, app_model.get_pred, src, model, opt, idx)
-    
-    
+    out = app_model.get_pred(src, model, opt, idx)
+
     print('Task %d took %.2fs' % (idx, (time() - t0)))
 
-    return text('asdasd')
-    # return json(out)
+    return json(out)
 
 @app.route('/get-label', methods=['POST'])
 async def get_labels_from_file(request):
@@ -101,7 +87,7 @@ async def get_labels_from_file(request):
         return text('No image file found.')
 
     out = app_model.get_pred(img_file.body, model, 'file', idx)
-    # loop.run_in_executor(pool, some_method, method_args)
+    
     print('Task %d took %.2fs' % (idx, (time() - t0)))
 
     return json(out)
@@ -110,8 +96,7 @@ async def get_labels_from_file(request):
 async def ignore_404s(request, exception):
     return text("Yep, I totally found the page: %s" % request.url)
 
-app.run(host='0.0.0.0', port=8000, before_start=load_model(), loop=loop, debug=True)
-# app.run(host='0.0.0.0', port=8000, debug=True)
+app.run(host='0.0.0.0', port=8000, before_start=load_model, workers=4, debug=True)
 
 
 # curl -X POST -F image=@t.jpg 'http://localhost:8000/get-label' ; echo ""
